@@ -28,34 +28,34 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 
 response = requests.get(search_url, headers=headers)
 dom = BeautifulSoup(response.text, 'html.parser')
-quotes = dom.find_all('a', {'data-qa': 'vacancy-serp__vacancy-title'})
+vacancies = dom.find_all('a', {'data-qa': 'vacancy-serp__vacancy-title'})
 # pprint(quotes)
-print(len(quotes))
-if len(quotes) == 0:
+print(len(vacancies))
+if len(vacancies) == 0:
     print(f'Вакансий с должностью {search_name} не найдено! Повторите поиск')
 else:
-    for item in quotes:
+    for item in vacancies:
         urls_list.append(item.get('href').split('?')[0])
     for url in urls_list:
         response = requests.get(url, headers=headers)
         dom = BeautifulSoup(response.text, 'html.parser')
-        quotes = dom.find('div', {'class': 'vacancy-title'})
-        vacancy_cost = quotes.find('span').getText().replace('\xa0', '').split(" ")
+        vacancies = dom.find('div', {'class': 'vacancy-title'})
+        vacancy_cost = vacancies.find('span').getText().replace('\xa0', '').split(" ")
 
         if vacancy_cost[0] == "з/п":
             result_data.update({str(url): {'head_url': head_url,
-                                           'vacancy_title': ''.join(quotes.find('h1').getText()),
+                                           'vacancy_title': ''.join(vacancies.find('h1').getText()),
                                            'vacancy_url': url,
-                                           'vacancy_cost': quotes.find('span').getText().replace('\xa0', '')}})
+                                           'vacancy_cost': vacancies.find('span').getText().replace('\xa0', '')}})
         elif vacancy_cost[2] == "руб.":
             result_data.update({str(url): {'head_url': head_url,
-                                           'vacancy_title': ''.join(quotes.find('h1').getText()),
+                                           'vacancy_title': ''.join(vacancies.find('h1').getText()),
                                            'vacancy_url': url,
                                            'vacancy_cost': vacancy_cost[1],
                                            'vacancy_cost_value': vacancy_cost[2]}})
         else:
             result_data.update({str(url): {'head_url': head_url,
-                                           'vacancy_title': ''.join(quotes.find('h1').getText()),
+                                           'vacancy_title': ''.join(vacancies.find('h1').getText()),
                                            'vacancy_url': url,
                                            'vacancy_cost_hight': vacancy_cost[1],
                                            'vacancy_cost_low': vacancy_cost[3],
