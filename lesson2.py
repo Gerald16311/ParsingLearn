@@ -10,12 +10,12 @@
 # По желанию можно добавить ещё параметры вакансии (
 # например, работодателя и расположение). Структура должна быть одинаковая для вакансий с обоих сайтов. Общий
 # результат можно вывести с помощью dataFrame через pandas. Сохраните в json либо csv.
-import requests
+import requests, json, time
 from bs4 import BeautifulSoup
-from pprint import pprint
-import json
+from progress.bar import IncrementalBar
+
 search_name = input(f'Введите искомую должность-')
-search_url = f'https://samara.hh.ru/search/vacancy?area=78&fromSearchLine=true&text={search_name}'
+search_url = f'https://samara.hh.ru/search/vacancy?fromSearchLine=true&text={search_name}'
 
 result_data = {}
 head_url = 'https://samara.hh.ru/'
@@ -25,44 +25,55 @@ urls_list = []
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                          'Chrome/97.0.4692.99 Safari/537.36 OPR/83.0.4254.46'}
 
+result = []
+# response = requests.get(search_url, headers=headers)
+# dom = BeautifulSoup(response.text, 'html.parser')
 
-response = requests.get(search_url, headers=headers)
-dom = BeautifulSoup(response.text, 'html.parser')
-vacancies = dom.find_all('a', {'data-qa': 'vacancy-serp__vacancy-title'})
-# pprint(quotes)
-print(len(vacancies))
-if len(vacancies) == 0:
-    print(f'Вакансий с должностью {search_name} не найдено! Повторите поиск')
-else:
-    for item in vacancies:
-        urls_list.append(item.get('href').split('?')[0])
-    for url in urls_list:
-        response = requests.get(url, headers=headers)
-        dom = BeautifulSoup(response.text, 'html.parser')
-        vacancies = dom.find('div', {'class': 'vacancy-title'})
-        vacancy_cost = vacancies.find('span').getText().replace('\xa0', '').split(" ")
+list_range = int(input(f'Введите количество обрабатываемых страниц - '))
 
-        if vacancy_cost[0] == "з/п":
-            result_data.update({str(url): {'head_url': head_url,
-                                           'vacancy_title': ''.join(vacancies.find('h1').getText()),
-                                           'vacancy_url': url,
-                                           'vacancy_cost': vacancies.find('span').getText().replace('\xa0', '')}})
-        elif vacancy_cost[2] == "руб.":
-            result_data.update({str(url): {'head_url': head_url,
-                                           'vacancy_title': ''.join(vacancies.find('h1').getText()),
-                                           'vacancy_url': url,
-                                           'vacancy_cost': vacancy_cost[1],
-                                           'vacancy_cost_value': vacancy_cost[2]}})
-        else:
-            result_data.update({str(url): {'head_url': head_url,
-                                           'vacancy_title': ''.join(vacancies.find('h1').getText()),
-                                           'vacancy_url': url,
-                                           'vacancy_cost_hight': vacancy_cost[1],
-                                           'vacancy_cost_low': vacancy_cost[3],
-                                           'vacancy_cost_value': vacancy_cost[4]}})
+bar = IncrementalBar('Сбор вакансий', max=list_range)
+for i in range(0, list_range):
+    response = requests.get(f'{search_url}&page=1', headers=headers)
+    dom = BeautifulSoup(response.text, 'html.parser')
+    vacancies = dom.find_all('a', {'data-qa': 'vacancy-serp__vacancy-title'})
+    if len(vacancies) == 0:
+        print(f'Вакансий с должностью {search_name} не найдено! Повторите поиск')
+    else:
+        for item in vacancies:
+            urls_list.append(item.get('href').split('?')[0])
+    bar.next()
 
-    # pprint(result_data)
+bar.finish()
+bar2 = IncrementalBar('Сбор информаций о вакансий', max=len(urls_list))
+for url in urls_list:
+    response = requests.get(url, headers=headers)
+    dom = BeautifulSoup(response.text, 'html.parser')
+    vacancies = dom.find('div', {'class': 'vacancy-title'})
+    vacancy_cost = vacancies.find('span').getText().replace('\xa0', '').split(" ")
+    if vacancy_cost[0] == "з/п":
+        result_data.update({str(url): {'head_url': head_url,
+                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
+                                        'Ссылка на вакансию': url,
+                                        'Зарплата': vacancies.find('span').getText().replace('\xa0', '')}})
+    elif vacancy_cost[2] == "руб.":
+        result_data.update({str(url): {'head_url': head_url,
+                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
+                                        'Ссылка на вакансию': url,
+                                        'Зарплата': vacancy_cost[1],
+                                        'Зарплата в ': vacancy_cost[2]}})
+    else:
+        result_data.update({str(url): {'head_url': head_url,
+                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
+                                        'Ссылка на вакансию': url,
+                                        'Зарплата до': vacancy_cost[1],
+                                        'Зарплата от': vacancy_cost[3],
+                                        'Зарплата в': vacancy_cost[4]}})
+    bar2.next()
+    result.append(result_data)
 
-    with open(f'parsed_data_{search_name}.json', 'w') as outfile:
-        json.dump(result_data, outfile, ensure_ascii=False)
+bar.finish()
+print(len(result))
+
+with open(f'parsed_data_{search_name}.json', 'w') as outfile:
+    json.dump(result, outfile, ensure_ascii=False)
 
