@@ -14,6 +14,12 @@
                   <Item>
                     <option name="path" value="parsed_data.json" />
                   </Item>
+                  <Item>
+                    <option name="path" value="parsed_data_Gerald16311.json" />
+                  </Item>
+                  <Item>
+                    <option name="path" value="parsed_data_hh.json" />
+                  </Item>
                 </list>
               </option>
             </SchemaInfo>
