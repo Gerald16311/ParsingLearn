@@ -1,11 +1,11 @@
 # Необходимо собрать информацию о вакансиях на вводимую должность (используем input или через аргументы получаем
 # должность) с сайтов HH(обязательно) и/или Superjob(по желанию). Приложение должно анализировать несколько страниц
 # сайта (также вводим через input или аргументы). Получившийся список должен содержать в себе минимум:
-    # Наименование вакансии.
-    # Предлагаемую зарплату (разносим в три поля: минимальная и максимальная и валюта. цифры преобразуем к
-    # цифрам).
-    # Ссылку на саму вакансию.
-    # Сайт, откуда собрана вакансия.
+# Наименование вакансии.
+# Предлагаемую зарплату (разносим в три поля: минимальная и максимальная и валюта. цифры преобразуем к
+# цифрам).
+# Ссылку на саму вакансию.
+# Сайт, откуда собрана вакансия.
 #
 # По желанию можно добавить ещё параметры вакансии (
 # например, работодателя и расположение). Структура должна быть одинаковая для вакансий с обоих сайтов. Общий
@@ -45,35 +45,39 @@ for i in range(0, list_range):
 
 bar.finish()
 bar2 = IncrementalBar('Сбор информаций о вакансий', max=len(urls_list))
+y = 1
 for url in urls_list:
     response = requests.get(url, headers=headers)
     dom = BeautifulSoup(response.text, 'html.parser')
     vacancies = dom.find('div', {'class': 'vacancy-title'})
     vacancy_cost = vacancies.find('span').getText().replace('\xa0', '').split(" ")
     if vacancy_cost[0] == "з/п":
-        result_data.update({str(url): {'head_url': head_url,
-                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
-                                        'Ссылка на вакансию': url,
-                                        'Зарплата': vacancies.find('span').getText().replace('\xa0', '')}})
+        result_data.update({str(url): {'number': y,
+                                       'head_url': head_url,
+                                       'Название вакансии': ''.join(vacancies.find('h1').getText()),
+                                       'Ссылка на вакансию': url,
+                                       'Зарплата': vacancies.find('span').getText().replace('\xa0', '')}})
     elif vacancy_cost[2] == "руб.":
-        result_data.update({str(url): {'head_url': head_url,
-                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
-                                        'Ссылка на вакансию': url,
-                                        'Зарплата': vacancy_cost[1],
-                                        'Зарплата в ': vacancy_cost[2]}})
+        result_data.update({str(url): {'number': y,
+                                       'head_url': head_url,
+                                       'Название вакансии': ''.join(vacancies.find('h1').getText()),
+                                       'Ссылка на вакансию': url,
+                                       'Зарплата': vacancy_cost[1],
+                                       'Зарплата в ': vacancy_cost[2]}})
     else:
-        result_data.update({str(url): {'head_url': head_url,
-                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
-                                        'Ссылка на вакансию': url,
-                                        'Зарплата до': vacancy_cost[1],
-                                        'Зарплата от': vacancy_cost[3],
-                                        'Зарплата в': vacancy_cost[4]}})
+        result_data.update({str(url): {'number': y,
+                                       'head_url': head_url,
+                                       'Название вакансии': ''.join(vacancies.find('h1').getText()),
+                                       'Ссылка на вакансию': url,
+                                       'Зарплата до': vacancy_cost[1],
+                                       'Зарплата от': vacancy_cost[3],
+                                       'Зарплата в': vacancy_cost[4]}})
     bar2.next()
+    y += 1
     result.append(result_data)
 
 bar.finish()
 print(len(result))
 
-with open(f'parsed_data_{search_name}.json', 'w') as outfile:
+with open(f'parsed_data_{search_name}.json', 'w', encoding='utf-8') as outfile:
     json.dump(result, outfile, ensure_ascii=False)
-
