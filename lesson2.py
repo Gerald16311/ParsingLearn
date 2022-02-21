@@ -52,32 +52,33 @@ for url in urls_list:
     vacancies = dom.find('div', {'class': 'vacancy-title'})
     vacancy_cost = vacancies.find('span').getText().replace('\xa0', '').split(" ")
     if vacancy_cost[0] == "з/п":
-        result_data.update({str(url): {'number': y,
-                                       'head_url': head_url,
+        result_data.update({str(url): {'head_url': head_url,
                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
                                        'Ссылка на вакансию': url,
-                                       'Зарплата': vacancies.find('span').getText().replace('\xa0', '')}})
+                                       'Зарплата до': None,
+                                       'Зарплата от': None,
+                                       'Зарплата в': None}})
+                                       # 'Зарплата': vacancies.find('span').getText().replace('\xa0', '')}})
     elif vacancy_cost[2] == "руб.":
-        result_data.update({str(url): {'number': y,
-                                       'head_url': head_url,
+        result_data.update({str(url): {'head_url': head_url,
                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
                                        'Ссылка на вакансию': url,
-                                       'Зарплата': vacancy_cost[1],
-                                       'Зарплата в ': vacancy_cost[2]}})
+                                       'Зарплата до': int(vacancy_cost[1]),
+                                       'Зарплата от': None,
+                                       'Зарплата в': vacancy_cost[2]}})
+                                       # 'Зарплата': vacancy_cost[1],
+                                       # 'Зарплата в ': vacancy_cost[2]}})
     else:
-        result_data.update({str(url): {'number': y,
-                                       'head_url': head_url,
+        result_data.update({str(url): {'head_url': head_url,
                                        'Название вакансии': ''.join(vacancies.find('h1').getText()),
                                        'Ссылка на вакансию': url,
-                                       'Зарплата до': vacancy_cost[1],
-                                       'Зарплата от': vacancy_cost[3],
+                                       'Зарплата до': int(vacancy_cost[1]),
+                                       'Зарплата от': int(vacancy_cost[3]),
                                        'Зарплата в': vacancy_cost[4]}})
     bar2.next()
-    y += 1
     result.append(result_data)
 
 bar.finish()
-print(len(result))
 
 with open(f'parsed_data_{search_name}.json', 'w', encoding='utf-8') as outfile:
     json.dump(result, outfile, ensure_ascii=False)
